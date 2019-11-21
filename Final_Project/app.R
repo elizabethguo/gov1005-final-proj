@@ -18,8 +18,10 @@ justicesdata <- read_csv("http://epstein.wustl.edu/research/justicesdata.csv",
 justices <- justicesdata %>% 
     filter(success == 1) 
 
-# Define UI for application that draws a histogram
+# Define UI for application.
 ui <- fluidPage(
+    
+    # Making all my tabs.
     
     navbarPage("Demographics of the U.S. Supreme Court Over Time",
                tabPanel("Religious Makeup",
@@ -97,9 +99,11 @@ ui <- fluidPage(
     )
 )
 
-# Define server logic required to draw a histogram
+# Define server logic.
 
 server <- function(input, output) {
+    
+    # Define outputs for all the different tabs. 
     
     output$aboutText <- renderText({
         
