@@ -11,7 +11,7 @@ library(RColorBrewer)
 library(shinythemes)
 library(tidyverse)
 
-# Reading in demographic data set from Epstein's website. Specify col_types.
+# Reading in demographic data set from Epstein's website. Specify col_types here.
 
 justicesdata <- read_csv("http://epstein.wustl.edu/research/justicesdata.csv",
                          col_types = cols(
