@@ -5,8 +5,8 @@ account: elizabeth-guo
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1504707
-bundleId: 2605900
+bundleId: 2636962
 url: https://elizabeth-guo.shinyapps.io/Final_Project/
-when: 1574305811.84054
+when: 1575399032.37627
 asMultiple: FALSE
 asStatic: FALSE

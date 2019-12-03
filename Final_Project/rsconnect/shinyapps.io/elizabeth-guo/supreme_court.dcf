@@ -1,0 +1,12 @@
+name: supreme_court
+title: supreme_court
+username:
+account: elizabeth-guo
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1556289
+bundleId: 2637000
+url: https://elizabeth-guo.shinyapps.io/supreme_court/
+when: 1575399776.14082
+asMultiple: FALSE
+asStatic: FALSE
