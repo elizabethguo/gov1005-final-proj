@@ -1,0 +1,210 @@
+---
+title: "Analyzing Demographics & Votes of the U.S. Supreme Court"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(shiny)
+library(fs)
+library(gt)
+library(tidymodels)
+library(rsample)
+library(readxl)
+library(janitor)
+library(RColorBrewer)
+library(shinythemes)
+library(tidyverse)
+library(htmltools)
+library(knitr)
+library(vembedr)
+
+justicesdata <- read_csv("http://epstein.wustl.edu/research/justicesdata.csv",
+                         col_types = cols(
+                             .default = col_character(),
+                             yrnom = col_double(),
+                             biryear = col_double(),
+                             agenom = col_double(),
+                             congress = col_double(),
+                             nomsen = col_double()
+                         )) 
+
+# Filter this dataset for justices that actually made it onto the bench, not
+# just those who were nominated.
+
+justicesdata <- justicesdata %>% 
+    filter(success == '1. yes, nominee took his/her seat on the court')
+
+
+
+
+# Clean this dataset for the purposes of ggplot labels later on. We categorize
+# all Protestant denominations together, and clean up the labels.
+
+justicesdata$nomrelig2 <- justicesdata$nomrelig
+justicesdata$nomrelig2 <- ifelse(justicesdata$nomrelig2 %in% c('1. baptist','3. congregationalist','4. disciples of christ','5. dutch reform','8. lutheran','9. methodist','10. presbyterian','11. protestant','12. quaker'), 'Protestant', justicesdata$nomrelig2)
+justicesdata$nomrelig2 <- ifelse(justicesdata$nomrelig2 %in% c('2. church of england'), 'Church of England', justicesdata$nomrelig2)
+justicesdata$nomrelig2 <- ifelse(justicesdata$nomrelig2 %in% c('6. episcopalian'), 'Episcopalian', justicesdata$nomrelig2)
+justicesdata$nomrelig2 <- ifelse(justicesdata$nomrelig2 %in% c('7. jewish'), 'Jewish', justicesdata$nomrelig2)
+justicesdata$nomrelig2 <- ifelse(justicesdata$nomrelig2 %in% c('13. roman catholic'), 'Roman Catholic', justicesdata$nomrelig2)
+justicesdata$nomrelig2 <- ifelse(justicesdata$nomrelig2 %in% c('14. unitarian'), 'Unitarian', justicesdata$nomrelig2)
+justicesdata$nomrelig2 <- ifelse(justicesdata$nomrelig2 %in% c('999. unclear or unknown'), 'Unknown', justicesdata$nomrelig2)
+
+justicedem <- read_xlsx("Final_Project/justicesdata.xlsx")
+
+justicevote <- read_csv("Final_Project/justicevote.csv",
+                        col_types = cols(
+                            justice = col_double(),
+                            term = col_double(),
+                            direction = col_double()
+                        ))
+
+fullvotes <- justicevote %>% 
+    inner_join(justicedem, by = c("justice" = "spaethid")) %>% 
+    filter(!is.na(direction)) %>% 
+    filter(yrnom >= 1948) %>% 
+    mutate(votedirection = as.factor(ifelse(direction == 1, "Conservative", "Liberal"))) %>% 
+    mutate(party = as.numeric(ifelse(parnom == 6, 0, 1)))
+```
+
+## Abstract
+
+This project, which seeks to analyze demographics and votes of the United States Supreme Court, has 3 aims. This project (1) examines changing demographics (religion, family socioeconomic status, race, childhood background, affiliated political party, and party of nominating president) of the Court over time, and draws observations on long-term historical trends; (2) seeks to answer the question if the direction of a justice's vote (liberal/conservative) in a case can be predicted by a logistic regression model involving some combination of demographic characteristics; (3) and provides a data-driven answer to the question, "Are Supreme Court justices politicians in robes?" I found a general diversifying trend in personal characteristics, that justices' voting behavior is generally not predictable by a variety of models, and that justices are not "politicians in robes," instead voting out of party line quite often. 
+
+\newpage
+
+## Research Question
+
+Do Supreme Court justices vote predictably based on their demographic background? 
+
+## Background and Significance
+
+The Supreme Court holds a unique role in United States government. Imbued with the task of exercising judicial review and interpreting the Constitution, how the Supreme Court rules on a variety of pertinent issues - gun rights, abortion, campaign finance - palpably affects the American public. However, public opinion polls in the last decade have indicated an American people who largely perceive the Supreme Court justices as making their decisions based on "their own partisan political views" rather than true "legal analysis." The AP-National Constitution Center conducted a 2010 poll on 1,007 adults nationwide that found that 78% of respondents believed that justices let politics guide their decisions, while only 19% believed that justices used "usually legal analysis." Furthermore, a Quinnipiac University Poll in 2019 on 1,044 registered votes nationwide found that 81% of respondents believe that "the process of confirming Supreme Court justices is too political" - with "process" referring to a presidential nomination and a Senate vote. 
+
+The upshot is that the justices of the highest court in our federal judiciary are at risk of being perceived as nothing more than "politicians in robes," which then motivates my project, which seeks to investigate the validity of this perception through a data-driven approach. This work is significant because it provides an objective, statistics-based characterization of those nine justices on the bench who ultimately - as complex human beings - may prove much less predictable than their reputations may suggest. 
+
+## Methods
+
+In order to investigate the question if justices' demographics (which include personal characteristics but also political party affiliations) can be used to predict their voting patterns, two distinct datasets are intuitively required: one on the justices' demographics and one on the justices' votes. I found the first dataset from the research of Professor Lee Epstein of WashU. Epstein's dataset provided information on over 200 demographic variables for every Court nominee since the nation's founding. To clean this dataset, I filtered only for those justics who were actually confirmed and served on the bench. I also chose to focus on these justices' nomination term year (for the purposes of creating an over-time graph) and certain demographic factors, explained later. The second dataset pertaining to justices' votes was found from the Supreme Court Database. I chose to use the justice-centered, citation-based dataset of the Modern Era Court, which included information only post 1948 (to avoid any confusion about changing ideologies of political parties) on every individual justice vote in every Supreme Court case. In cleaning this data set, I focused on the variables of "votedirection" (a binary liberal or conservative) as well as "issueArea" (the legal issue at hand).
+
+The data collectors of these two datasets used the same identification coding that gave each individual justice a unique ID number. I thus was able to join these two datasets by this unique number, so that each row of the full dataset with which I was working included the demographic information and voting information of a single justice in a single case. 
+
+## Results
+
+### Part I: Changing Demographics of the Court
+
+The first part of my project involved examining the changing demographic numbers of the justices over time for contextual understanding. I plotted the numbers of justices for six demographic factors - religion, family socioeconomic status, race, childhood background, affiliated political party, and party of nominating president - cumulatively over time up until 2018. Some of these observations included that in our traditionally Protestant nation, the numbers of Jewish and Catholic justices have been increasing; justices have historically come from upper class socioeconomic backgrounds but justices from the middle class have been on the rise; and there have been 3 nonwhite justices in total. 
+
+```{r}
+#justicesdata %>%  
+            #filter(yrnom <= 2018) %>% 
+            #count(nomrelig2) %>% 
+            #ggplot(aes(x = nomrelig2, y = n)) +
+           # geom_col(fill='darkblue') +
+           # theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1)) +
+           # labs(title = ("Total Number of Justices of Each Religion Nominated by 2018"),
+            #     x = "Religion",
+           #      y = "Count")
+```
+
+### Part II: Can We Predict Justice Votes? 1948 - 2018
+
+My aim here was to see if it was possible to predict a justice's vote direction in a Supreme Court case based on various or a combination of characteristics. To do so, I employed machine learning techniques - in each of the 3 models, I ran a logistic regression, made a prediction for how the justice will vote in each datapoint using the generated model, and then compared it to the real dataset to ascertain model accuracy and kappa percentage values. Here, I categorize a particular vote direction as being either conservative or liberal according to this definition: http://scdb.wustl.edu/documentation.php?var=decisionDirection. 
+
+#### Model 1 - Personal Background
+
+
+```{r}
+h5(strong("Logistic Regression:"), code("votedirection ~ nomrelig + famses + race + childsur"))
+
+gt_model1 <- logistic_reg() %>%
+    set_engine("glm") %>%
+    fit(data = fullvotes, votedirection ~ nomrelig + famses + race + childsur) %>%
+    predict(new_data = fullvotes) %>%
+    bind_cols(fullvotes) %>%
+    metrics(truth = votedirection, estimate = .pred_class) %>%
+    gt() %>% 
+    tab_header("Model 1 Evaluation on 1948-2018")
+
+gt_model1
+```
+
+Can a justice's vote direction can be explained by personal background characteristics: their religion, family socioeconomic status, race, and childhood surroundings background? In my evaluation of Model 1, accuracy percentage is at 56.13%, meaning that the model predicts if a justice votes conservatively or liberally based on their personal background 56.13% of the time. The kappa value is 12.37%, meaning that our model is this much better than if we were to predict justice votes completely randomly. While the accuracy is greater than a half, it is barely so, and our kappa value also is not high enough to demonstrate that this is a convincing model.
+
+#### Model 2 - Party Affiliation 
+
+```{r}
+h5(strong("Logistic Regression:"), code("votedirection ~ parnom"))
+
+gt_model2 <- logistic_reg() %>%
+    set_engine("glm") %>%
+    fit(data = fullvotes, votedirection ~ parnom) %>%
+    predict(new_data = fullvotes) %>%
+    bind_cols(fullvotes) %>%
+    metrics(truth = votedirection, estimate = .pred_class) %>%
+    gt() %>% 
+    tab_header("Model 2 Evaluation on 1948-2018")
+
+gt_model2
+```
+
+Can a justice's vote direction can be explained by their party affiliation at the time of nomination? While the accuracy is greater than a half, it is barely so, and our kappa value also is not high enough to demonstrate that this is a convincing model. Nevertheless, this is the most accurate model out of the three examined.
+
+#### Model 3 - Nominating President
+
+```{r}
+h5(strong("Logistic Regression:"), code("votedirection ~ prespart"))
+
+gt_model3 <- logistic_reg() %>%
+    set_engine("glm") %>%
+    fit(data = fullvotes, votedirection ~ prespart) %>%
+    predict(new_data = fullvotes) %>%
+    bind_cols(fullvotes) %>%
+    metrics(truth = votedirection, estimate = .pred_class) %>%
+    gt() %>% 
+    tab_header("Model 3 Evaluation on 1948-2018")
+
+gt_model3
+```
+
+Can a justice's vote direction can be explained by the party of the president who nominated them? This is the weakest model out of the three.
+
+
+Overall, justice vote patterns cannot be reliably predicted with any of these models. 
+
+### Part III - "Politicians in Robes?"
+
+Again, Supreme Court justices are often criticized for being "politicians in robes." Visualizing Model 2, which is a logistic regression for how a justice's party might affect their vote direction, may show us to what extent this stereotype is true.
+
+```{r, warning = FALSE, fig.width=5,fig.height=3, fig.align = "center"}
+glm_2 <- glm(formula = direction ~ party, data = fullvotes)
+        
+        glm_2 %>% 
+            ggplot(aes(x = party, y = direction)) +
+            geom_jitter(height = 0.3, width = 0.2, alpha = 0.009) +
+            geom_smooth(method = "glm", method_args = list(family = "binomial"), se = TRUE) +
+            labs(title = "Justice Party/Vote Direction, 1949-2018",
+                 subtitle = "Running a logistic regression",
+                 x = "Party of Justice at Nomination",
+                 y = "Direction of Vote",
+                 caption = "Party (0 = Republican, 1 = Democrat)
+       Direction (1 = Conservative, 2 = Liberal)")
+```
+
+Because we have coded Republican = 0, Democratic = 1 and Conservative Vote = 1, Liberal Vote = 2, if each justice were to vote in line with their party, we would expect to see a concentration of datapoints in the lower left and upper right regions (i.e. Republicans vote conservatively, and Democrats vote liberally). But this is not the case. The slope of our logistic regression line is quite flat in shape and only slightly positive. Justices thus do vote in party line more often than not, but this is not overwhelmingly the case. We do see a slightly positive justice party-vote correlation, but the data-driven answer would be that justices are largely not politicans in robes. 
+
+## Discussion
+
+This project has shown that justices are not very predictable in vote patterns, at least in models considering personal background, political party, and nominating president's party. They also vote out of expected party line enough to disavow them of the stereotype as "politicans in robes." I assumed in my project that party ideologies have remained consistent since 1948, which is a reasonable assumption considering the beginning of the modern two-party system in the 1850s and the epitomal Democratic presidency of Franklin Delano Roosevelt starting in the 1930s. Possibilities of next steps moving forward are to investigate if justices are more likely to vote in party line during certain cases as opposed to others (perhaps based on legal issue area, relative importance of case, etc.)
+
+\newpage
+
+## References
+
+Polling Report. https://www.pollingreport.com/court.htm
+
+Epstein, Lee, Thomas G. Walker, Nancy Staudt, Scott Hendrickson, and Jason Roberts. (2019). The U.S. Supreme Court Justices Database. February 11. http://epstein.wustl.edu/research/justicesdata.html. 
+
+Harold J. Spaeth, Lee Epstein, Andrew D. Martin, Jeffrey A. Segal, Theodore J. Ruger, and Sara C. Benesh. 2019 Supreme Court Database, Version 2019 Release 01. http://supremecourtdatabase.org/.

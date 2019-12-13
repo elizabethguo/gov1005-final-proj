@@ -207,7 +207,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                         
                                         
                                         h2("Walkthrough"),
-                                   
+                                        embed_url("https://www.youtube.com/watch?v=UrOUVd67Peo"),
                                         
             
                                         h2("About Elizabeth Guo"),
