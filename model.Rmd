@@ -71,6 +71,8 @@ logistic_reg() %>%
 ```
 
 
+
+
 ```{r}
 
 glm_2 <- glm(formula = direction ~ party, data = fullvotes)
@@ -87,6 +89,39 @@ glm_2 %>%
        caption = "Party (0 = Republican, 1 = Democrat)
        Direction (1 = Conservative, 2 = Liberal)")
 ```
+
+```{r}
+fullvotes$issueArea <- as.factor(fullvotes$issueArea)
+
+fullvotes$issueArea2 <- fullvotes$issueArea
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('1'), 'Criminal Procedure', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('2'), 'Civil Rights', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('3'), 'First Amendment', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('4'), 'Due Process', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('5'), 'Privacy', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('6'), 'Attorneys', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('7'), 'Unions', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('8'), 'Economic Activity', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('9'), 'Judicial Power', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('10'), 'Federalism', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('11'), 'Interstate Relations', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('12'), 'Federal Taxation', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('13'), 'Misc.', fullvotes$issueArea2)
+fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('14'), 'Private Action', fullvotes$issueArea2)
+
+fullvotes %>% 
+  filter(term == 2018) %>% 
+  ggplot(aes(x = party, y = direction, color = issueArea2)) +
+  geom_jitter(height = 0.3, width = 0.2, alpha = 0.5) +
+  labs(title = "Relationship between Justice's Party and Vote Direction: 2018",
+       subtitle = "Scatterplot, Colored by Issue",
+       x = "Party of Justice at Nomination",
+       y = "Direction of Vote",
+       color = "Legal Issue",
+       caption = "Party (0 = Republican, 1 = Democrat)
+       Direction (1 = Conservative, 2 = Liberal)")
+```
+
 
 
 

@@ -10,6 +10,8 @@ library(janitor)
 library(RColorBrewer)
 library(shinythemes)
 library(tidyverse)
+library(htmltools)
+library(vembedr)
 
 # Reading in demographic data set from Epstein's website. Specify col_types here.
 
@@ -54,9 +56,20 @@ justicesdata$race2 <- ifelse(justicesdata$race2 %in% c('0. white'), 'White', jus
 justicesdata$race2 <- ifelse(justicesdata$race2 %in% c('1. black'), 'Black', justicesdata$race2)
 justicesdata$race2 <- ifelse(justicesdata$race2 %in% c('2. Hispanic origin'), 'Hispanic', justicesdata$race2)
 
+justicesdata$childsur2 <- justicesdata$childsur
+justicesdata$childsur2 <- ifelse(justicesdata$childsur2 %in% c('1. family farm'), 'Family Farm', justicesdata$childsur2)
+justicesdata$childsur2 <- ifelse(justicesdata$childsur2 %in% c('2. rural'), 'Rural', justicesdata$childsur2)
+justicesdata$childsur2 <- ifelse(justicesdata$childsur2 %in% c('3. small town'), 'Small Town', justicesdata$childsur2)
+justicesdata$childsur2 <- ifelse(justicesdata$childsur2 %in% c('5. urban (large/larger city)'), 'Urban', justicesdata$childsur2)
+justicesdata$childsur2 <- ifelse(justicesdata$childsur2 %in% c('6. family plantation'), 'Family Plantation', justicesdata$childsur2)
 
+justicesdata$parnom2 <- justicesdata$parnom
+justicesdata$parnom2 <- ifelse(justicesdata$parnom2 %in% c('1. democrat'), 'Democrat', justicesdata$parnom2)
+justicesdata$parnom2 <- ifelse(justicesdata$parnom2 %in% c('6. republican'), 'Republican', justicesdata$parnom2)
 
-
+justicesdata$prespart2 <- justicesdata$prespart
+justicesdata$prespart2 <- ifelse(justicesdata$prespart2 %in% c('1. democrat'), 'Democrat', justicesdata$prespart2)
+justicesdata$prespart2 <- ifelse(justicesdata$prespart2 %in% c('6. republican'), 'Republican', justicesdata$prespart2)
 
 # Read in the demographic dataset (again).
 
@@ -69,9 +82,9 @@ justicedem <- read_xlsx("justicesdata.xlsx")
 # new csv that we will use. I then deleted the old full dataset, which was very
 # large.
 
-# justicevote <- read_xlsx("SCDB_2019_01_justiceCentered_Citation3.xlsx")
+# justicevote <- read_xlsx("Final_Project/SCDB_2019_01_justiceCentered_Citation3.xlsx")
 # justicevote <- justicevote %>% 
-# select("justice", "term", "direction")
+# select("justice", "term", "direction", "issueArea")
 # justicevote <- write_csv(justicevote, "justicevote.csv")
 
 
@@ -166,10 +179,17 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                            
                            
                            
-                           # The first tab is About, which just consists of one page
-                           # explaining the setup of my project.
+                           # The first tab is About, which just consists of one
+                           # page explaining the setup of my project. I know we
+                           # are supposed to ordinarily open on an "interesting"
+                           # tab, but I chose to open mine here anyway because I
+                           # felt that for my project specifically, readers
+                           # would benefit from first reading about the setup of
+                           # my project and the nature of my two datasets. Then
+                           # it just made natural sense to put the rest of my
+                           # about information here as well.
                            
-                           tabPanel("About",
+                           tabPanel("Intro",
                                     mainPanel(
                                         
                                         h2("Motivation"),
@@ -186,7 +206,10 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                         p("Harold J. Spaeth, Lee Epstein, Andrew D. Martin, Jeffrey A. Segal, Theodore J. Ruger, and Sara C. Benesh. 2019 Supreme Court Database, Version 2019 Release 01.", a("See data.", href="http://Supremecourtdatabase.org"), style = "font-size:80%"),
                                         
                                         
+                                        h2("Walkthrough"),
+                                   
                                         
+            
                                         h2("About Elizabeth Guo"),
                                         p("I am a sophomore at Harvard concentrating in Physics & Mathematics with a secondary in Government. I am very interested in the intersection of law and the quantitative."),
                                         p("Contact me at elizabethguo@college.harvard.edu."),
@@ -229,7 +252,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                                                      value = 1789),
                                                          br(),
                                                          br(),
-                                                         h5("Dragging the slider toward 2018, we can see that the religions with which justices associate have diversified over the years. Specifically, in the past 100 years, the numbers of Roman-Catholic and Jewish justices have experienced relative growth."),
+                                                         h5("Dragging the slider toward 2018, we can see that the religions with which justices associate have diversified over the years. Specifically, we started with only Episcopalian and Protestant justices (which makes sense, considering the nation's roots in Protestantism), but in the past 100 years, the numbers of Roman-Catholic and Jewish justices have experienced relative growth."),
                                                          
                                                          h6(em("Coding Notes")),
                                                          h6(em("Here, I have coded Baptist, Congregationalist, Disciples of Christ, Dutch Reform, Lutheran, Methodist, Presybyterian, Protestant, and Quaker justices all as Protestant, since these are different branches of Protestantism.")),
@@ -257,7 +280,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                                                      value = 1789),
                                                          br(),
                                                          br(),
-                                                         h5("Justices have historically come from an Upper socioeconomic class background. In the past 50 years, however, there has been a relative increase in the number of justices from a Middle socioeconomic class background."),
+                                                         h5("Justices have historically largely come from an Upper socioeconomic class background. In the past 50 years, however, there has been a relative increase in the number of justices from a Middle socioeconomic class background. The number of justices from a Lower socioeconomic class background has remained relatively few."),
                                                          
                                                          h6(em("Coding Notes")),
                                                          h6(em("Here, I have coded Lower-Middle and Middle together as the Middle category, and Upper-Middle and Upper together as the Upper category. Having 3 larger categories as opposed to 5 makes the socioeconomic breakdown easier to see.")),
@@ -307,7 +330,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                                                      value = 1789),
                                                          br(),
                                                          br(),
-                                                         h5("In 1900, justices had historically mostly come from rural home backgrounds. By 2018, the numbers of justices from small towns had risen, but perhaps most noteworthy is that there have been more justices from urban backgrounds than any other background."),
+                                                         h5("In 1900, justices had historically mostly come from rural home backgrounds. Moving ahead, the number of justices from small towns and urban areas rose, perhaps as a product of the nation's urbanization as well. By 2018, there have been more justices from urban backgrounds than any other background."),
                                                          br()
                                                      ),
                                                      mainPanel(
@@ -324,13 +347,13 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                                      sidebarPanel(
                                                          sliderInput(inputId = "party_slider",
                                                                      label = "Year",
-                                                                     min = 1789,
+                                                                     min = 1850,
                                                                      max = 2018,
-                                                                     step = 10,
-                                                                     value = 1789),
+                                                                     step = 5,
+                                                                     value = 1850),
                                                          br(),
                                                          br(),
-                                                         h5("The Democratic Party was formerly known as the Democratic-Republican Party (founded in 1792 and dissolved in 1825). The modern two-party system comprising the Democratic and Republican parties arose in the 1850s: start the slider there to only observe changes in the modern two-party breakdown."),
+                                                         h5("The modern two-party system comprising the Democratic and Republican parties arose in the 1850s, so we start here and use a five year increment in order to better see additions of justices of the two modern parties to the court."),
                                                          br()
                                                      ),
                                                      mainPanel(
@@ -348,13 +371,13 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                                      sidebarPanel(
                                                          sliderInput(inputId = "pres_slider",
                                                                      label = "Year",
-                                                                     min = 1789,
+                                                                     min = 1850,
                                                                      max = 2018,
-                                                                     step = 10,
-                                                                     value = 1789),
+                                                                     step = 5,
+                                                                     value = 1850),
                                                          br(),
                                                          br(),
-                                                         h5("The President of the United States nominates Supreme Court Justices, who then must be confirmed by the Senate. This plot depicts the party affiliation of the presidents who nominated justices. The Democratic Party was formerly known as the Democratic-Republican Party (founded in 1792 and dissolved in 1825). The modern two-party system comprising the Democratic and Republican parties arose in the 1850s: start the slider there to only observe changes in the modern two-party breakdown."),
+                                                         h5("The President of the United States nominates Supreme Court Justices, who then must be confirmed by the Senate. This plot depicts the party affiliation of the presidents who nominated justices, again starting with the modern parties in the 1850s. We use a five year increment in order to better see additions of justices of the two modern parties to the court."),
                                                          h5("To note, President Franklin D. Roosevelt, Democrat, appointed 9 Supreme Court Justices during his presidency from 1933 to 1945. President Richard Nixon, Republican, appointed 4 Supreme Court Justices during his presidency from 1969 to 1974. By dragging the slider over these years, one can see a noticeable growth in the Democratic and Republican columns, respectively."),
                                                          br()
                                                      ),
@@ -485,7 +508,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                         # written analysis on the two plots.
                                         
                                         
-                                        tabPanel("Plotting Model 2",
+                                        tabPanel("Answers?",
                                                  sidebarLayout(
                                                      sidebarPanel(
                                                          sliderInput(inputId = "model2_slider",
@@ -499,10 +522,12 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                                          br(),
                                                          h5("Because we have coded Republican = 0, Democratic = 1 and Conservative Vote = 1, Liberal Vote = 2, if each justice were to vote in line with their party, we would expect to see a concentration of datapoints in the lower left and upper right regions (i.e. Republicans vote conservatively, and Democrats vote liberally)."),
                                                          h5("But this is not the case. Click through the years - the slope of our logistic regression line wavers but is most often quite flat in shape and only slightly positive. Justices thus do vote in party line more often than not, but this is not overwhelmingly the case."),
-                                                         
                                                          br(),
-                                                         h5("With all the data from 1949 to 2018 combined, we do see a slightly positive justice party-vote correlation - but still, many justices have voted out of party line in many cases.")
-                                                     ),
+                                                         h5("----"),
+                                                         br(),
+                                                         h5("With all the data from 1949 to 2018 combined, we do see a slightly positive justice party-vote correlation - but still, many justices have voted out of party line in many cases."),
+                                                         br()
+                                                    ),
                                                      
                                                      
                                                      # The mainPanel here contains some context for the
@@ -514,13 +539,21 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                                          h2(strong("Are justices \"politicians in robes\"?")),
                                                          h4("Supreme Court justices are often criticized for being", a("\"politicians in robes\"", href="https://www.google.com/search?q=justices+politicians+in+robes&rlz=1C5CHFA_enUS762US762&oq=justices+politicians+in+robes&aqs=chrome..69i57.606j0j9&sourceid=chrome&ie=UTF-8"), ", meaning they simply vote according to their personal political agenda and their affiliated party line. Visualizing Model 2, which is a logistic regression for how a justice's party might affect their vote direction, may show us to what extent this stereotype is true."),
                                                          br(),
-                                                         hr(em("Conclusion: Justices have voted out of expected party line quite often from 1949-2018.")),
+                                                         hr(em("Conclusion: Justices have voted out of expected party line quite often from 1949-2018. From a data-driven perspective, they are not simply politicans in robes.")),
                                                          br(),
                                                          br(),
                                                          plotOutput("model2plot"),
                                                          br(),
                                                          h5("All data from 1949-2018."),
-                                                         plotOutput("model2totalplot")
+                                                         plotOutput("model2totalplot"),
+                                                         br(),
+                                                         br(),
+                                                         h4(strong("A question of legal issue?")),
+                                                         h5("Do justices tend to vote in expected party line more often when ruling on some legal issues area as opposed to others? By coloring the case datapoints in 2018 by according to legal issue at hand, and seeing that the colors appear fairly distributed, it seems like the pertinent legai issue is not a factor in justices voting in/out of line."),
+                                                         br(),
+                                                         plotOutput("colorIssuePlot"),
+                                                         br(),
+                                                         br()
                                                      )
                                                  )
                                                  
@@ -614,13 +647,13 @@ server <- function(input, output) {
     datareact4 <- reactive({
         justicesdata %>% 
             filter(yrnom <= input$home_slider) %>% 
-            count(childsur)
+            count(childsur2)
     })
     
     output$homePlot <- renderPlot({
         
         datareact4() %>%  
-            ggplot(aes(x = childsur, y = n)) +
+            ggplot(aes(x = childsur2, y = n)) +
             geom_col(fill='darkblue') +
             theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1)) +
             labs(title = ("Total Number of Justices of Each Hometown Background Nominated by Selected Decade"),
@@ -635,13 +668,14 @@ server <- function(input, output) {
     datareact5 <- reactive({
         justicesdata %>% 
             filter(yrnom <= input$party_slider) %>% 
-            count(parnom)
+            filter(parnom2 %in% c("Democrat", "Republican")) %>% 
+            count(parnom2)
     })
     
     output$partyPlot <- renderPlot({
         
         datareact5() %>%  
-            ggplot(aes(x = parnom, y = n)) +
+            ggplot(aes(x = parnom2, y = n)) +
             geom_col(fill='darkblue') +
             theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1)) +
             labs(title = ("Total Number of Justices of Each Party Nominated by Selected Decade"),
@@ -656,13 +690,14 @@ server <- function(input, output) {
     datareact6 <- reactive({
         justicesdata %>% 
             filter(yrnom <= input$pres_slider) %>% 
-            count(prespart)
+            filter(prespart2 %in% c("Democrat", "Republican")) %>% 
+            count(prespart2)
     })
     
     output$presPlot <- renderPlot({
         
         datareact6() %>%  
-            ggplot(aes(x = prespart, y = n)) +
+            ggplot(aes(x = prespart2, y = n)) +
             geom_col(fill='darkblue') +
             theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1)) +
             labs(title = ("Total Number of Justices of Each President's Party Nominated by Selected Decade"),
@@ -745,7 +780,7 @@ server <- function(input, output) {
         
         glm_2 %>% 
             ggplot(aes(x = party, y = direction)) +
-            geom_jitter(height = 0.3, width = 0.2, alpha = 0.05, fill='darkblue') +
+            geom_jitter(height = 0.3, width = 0.2, alpha = 0.05) +
             geom_smooth(method = "glm", method_args = list(family = "binomial"), se = TRUE) +
             labs(title = "Relationship between Justice's Party and Vote Direction, Total 1949-2018",
                  subtitle = "Running a logistic regression",
@@ -753,6 +788,48 @@ server <- function(input, output) {
                  y = "Direction of Vote",
                  caption = "Party (0 = Republican, 1 = Democrat)
        Direction (1 = Conservative, 2 = Liberal)")
+        
+    })
+    
+    # Here, I first recode all the different legal issues names to make them
+    # readable. Then, I make a ggplot that just looks at 2018 through a filter,
+    # and color the datapoints by the pertinent legal issue at hand.
+    
+    output$colorIssuePlot <- renderPlot({
+        
+        # issueArea is originally coded as an integer, so I changed it to a
+        # factor.
+        
+        fullvotes$issueArea <- as.factor(fullvotes$issueArea)
+        
+        fullvotes$issueArea2 <- fullvotes$issueArea
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('1'), 'Criminal Procedure', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('2'), 'Civil Rights', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('3'), 'First Amendment', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('4'), 'Due Process', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('5'), 'Privacy', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('6'), 'Attorneys', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('7'), 'Unions', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('8'), 'Economic Activity', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('9'), 'Judicial Power', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('10'), 'Federalism', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('11'), 'Interstate Relations', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('12'), 'Federal Taxation', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('13'), 'Misc.', fullvotes$issueArea2)
+        fullvotes$issueArea2 <- ifelse(fullvotes$issueArea2 %in% c('14'), 'Private Action', fullvotes$issueArea2)
+        
+        fullvotes %>% 
+            filter(term == 2018) %>% 
+            ggplot(aes(x = party, y = direction, color = issueArea2)) +
+            geom_jitter(height = 0.3, width = 0.2, alpha = 0.5) +
+            labs(title = "Relationship between Justice's Party and Vote Direction: 2018",
+                 subtitle = "Scatterplot, Colored by Issue",
+                 x = "Party of Justice at Nomination",
+                 y = "Direction of Vote",
+                 color = "Legal Issue",
+                 caption = "Party (0 = Republican, 1 = Democrat)
+        Direction (1 = Conservative, 2 = Liberal)")
+        
         
     })
     
