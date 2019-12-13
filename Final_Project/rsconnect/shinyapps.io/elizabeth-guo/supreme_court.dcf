@@ -5,8 +5,8 @@ account: elizabeth-guo
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1556289
-bundleId: 2665644
+bundleId: 2665653
 url: https://elizabeth-guo.shinyapps.io/supreme_court/
-when: 1576257199.11003
+when: 1576257365.1313
 asMultiple: FALSE
 asStatic: FALSE
